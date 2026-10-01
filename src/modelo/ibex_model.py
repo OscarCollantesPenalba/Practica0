@@ -1,5 +1,6 @@
-from pyspark.sql.functions import col, regexp_replace, min, max, countDistinct
-
+from pyspark.sql.functions import col, regexp_replace, min, max, countDistinct, avg, when
+from pyspark.sql.types import StructType, StructField, StringType, DecimalType
+ 
 from src.modelo.data_loader import load_raw, load_with_schema
 from src.modelo.ibex_schema import build_schema
 
@@ -19,10 +20,8 @@ class IbexModel:
 
     def convert_types(self, df):
         """Ej1-a: Fecha (string -> date) y precios (string -> decimal)."""
-        # dd/MM/yyyy -> yyyy-MM-dd (formato que necesita cast("date"))
         df = df.withColumn("Fecha", regexp_replace(col("Fecha"), r"(\d{2})/(\d{2})/(\d{4})", r"$3-$2-$1"))
         df = df.withColumn("Fecha", col("Fecha").cast("date"))
-        # Los nombres como "IBE.MC" llevan punto: dentro de col() van entre acentos graves
         for c in df.columns:
             if c != "Fecha":
                 df = df.withColumn(c, col(f"`{c}`").cast("decimal(10, 2)"))
@@ -56,4 +55,29 @@ class IbexModel:
         dias = df.select(countDistinct("Fecha")).head(1)[0][0]
         return fila[0], fila[1], dias
     
+#========================================================================================
+#===================Ejercicio 3==========================================================
+#========================================================================================
 
+    def rename_fecha(self, df):
+        """Ej3: renombra la columna Fecha a Dia."""
+        return df.withColumnRenamed("Fecha", "Dia")
+ 
+    def estadisticas_anuales(self, df):
+        empresas = [c for c in df.columns if c != "Dia"]
+        medias = df.agg({c: "avg" for c in empresas}).head(1)[0]
+        maximos = df.agg({c: "max" for c in empresas}).head(1)[0]
+        minimos = df.agg({c: "min" for c in empresas}).head(1)[0]
+        datos = [(c, round(medias[f"avg({c})"], 2), maximos[f"max({c})"], minimos[f"min({c})"])
+                for c in empresas]
+        esquema = StructType([
+            StructField("Empresa", StringType(), True),
+            StructField("Media anual", DecimalType(10, 2), True),
+            StructField("Max anual", DecimalType(10, 2), True),
+            StructField("Min anual", DecimalType(10, 2), True),
+        ])
+        return self.spark.createDataFrame(datos, schema=esquema)
+ 
+    def add_deficiency_notice(self, df):
+        """Ej3: True si UNI cierra por debajo de 1 EUR ese día (cada día por separado)."""
+        return df.withColumn("Deficiency Notice UNI", when(col("UNI") < 1, True).otherwise(False))

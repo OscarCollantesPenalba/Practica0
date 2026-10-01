@@ -18,6 +18,8 @@ class IbexController:
         self.ej1c()
         self.ej2a()
         self.ej2b()
+        self.ej3a()
+        self.ej3b()
 
     def ej1a(self):
         # Ej1-a
@@ -62,6 +64,32 @@ class IbexController:
         self.view.valor("Fecha inicial", inicio)
         self.view.valor("Fecha final", fin)
         self.view.valor("Días con información", dias)
-        # Texto orientativo: contrasta los días que faltan con el calendario de BME y reescríbelo con tus palabras
         self.view.mensaje("Comentario: el periodo cubre todo 2024 con 255 sesiones, coherente con un año bursátil "
                           "(262 días laborables menos 7 sin datos, que parecen festivos de mercado).")
+    
+    def ej3a(self):
+        # Ej3-a
+        #Herramienta IA usada: Claude
+        self.view.titulo("Ej3")
+        self.df = self.model.rename_fecha(self.df)
+        self.view.filas(self.df, 10)
+        estadisticas = self.model.estadisticas_anuales(self.df)
+        self.view.filas(estadisticas, estadisticas.count())
+        df_deficiency = self.model.add_deficiency_notice(self.df)
+        self.view.filas(df_deficiency, 100)
+        
+    def ej3b(self):
+        #Ej3-b
+        #Herramienta IA usda: Claude
+        self.view.titulo("Ej3-b")
+        self.view.mensaje("Comentario/Reflexión/Investigación: las empresas son las que formaron parte del IBEX 35 en 2024; "
+                        "el Comité Asesor Técnico de BME las elige sobre todo por liquidez (volumen negociado en euros) "
+                        "y por superar una capitalización mínima, no por su tamaño.")
+        self.view.mensaje("Los NULL de MEL y PUIG vienen del cambio de composición del índice: Puig sustituyó a Meliá "
+                        "el 22/07/2024, y cada una solo tiene datos mientras estuvo en el IBEX 35.")
+        self.view.mensaje("Afectan solo al Ej3: avg, max y min ignoran los NULL, así que MEL y PUIG se calculan con "
+                        "141 y 114 días de 255, no con todo el año.")
+        self.view.mensaje("Referencia/s: CNMV, infografía del IBEX 35 (https://www.cnmv.es/DocPortal/Publicaciones/Infografias/IBEX35.pdf); "
+                        "Valencia Plaza, 'Puig entrará en el Ibex 35 a partir del 22 de julio', julio de 2024 "
+                        "(https://valenciaplaza.com/puig-entrara-ibex-35-partir-22-julio); "
+                        "INEAF, 'Qué es el IBEX 35' (https://www.ineaf.es/tribuna/que-es-ibex-35/).")
