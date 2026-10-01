@@ -9,3 +9,9 @@ class IbexView:
 
     def filas(self, df, n=6):
         df.show(n)
+
+    def valor(self, etiqueta, valor):
+        print(f"{etiqueta}: {valor}")
+
+    def mensaje(self, texto):
+        print(texto)
