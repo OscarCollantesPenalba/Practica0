@@ -1,11 +1,11 @@
 class IbexView:
-    """Solo muestra información por consola (no calcula nada)."""
+    """Capa de vista: solo imprime por consola, no calcula ni transforma datos."""
 
-    def title(self, ejercicio):
+    def titulo(self, ejercicio):
         print(ejercicio)
 
-    def schema(self, df):
+    def esquema(self, df):
         df.printSchema()
 
-    def rows(self, df, n=6):
+    def filas(self, df, n=6):
         df.show(n)
