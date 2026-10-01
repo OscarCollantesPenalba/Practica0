@@ -65,5 +65,3 @@ class IbexController:
         # Texto orientativo: contrasta los días que faltan con el calendario de BME y reescríbelo con tus palabras
         self.view.mensaje("Comentario: el periodo cubre todo 2024 con 255 sesiones, coherente con un año bursátil "
                           "(262 días laborables menos 7 sin datos, que parecen festivos de mercado).")
-        self.view.mensaje("No parece necesario buscar más datos, aunque conviene confirmar en el calendario de BME "
-                          "que el 31/12 no fue sesión.")
