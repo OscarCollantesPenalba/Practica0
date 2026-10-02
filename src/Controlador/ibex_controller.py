@@ -1,6 +1,7 @@
 from src.modelo.spark_session import get_spark_session
 from src.modelo.ibex_model import IbexModel
 from src.vista.ibex_view import IbexView
+from src.modelo.db_conexión import DBConnection
 
 
 class IbexController:
@@ -10,6 +11,7 @@ class IbexController:
         self.spark = get_spark_session()
         self.model = IbexModel(self.spark)
         self.view = IbexView()
+        self.db = DBConnection()
         self.df = None  # DataFrame de trabajo, se va actualizando ejercicio a ejercicio
 
     def run(self):

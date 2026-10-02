@@ -4,7 +4,7 @@ import os
 class DBConnection:
     """Gestiona la conexión JDBC entre Spark y MySQL."""
 
-    def __init__(self, host="localhost", port=3306, database="IBEX35", user="Oscar", password=1234):
+    def __init__(self, host="localhost", port=3306, database="IBEX35", user="Oscar", password="1234"):
         self.host = host
         self.port = port
         self.database = database
