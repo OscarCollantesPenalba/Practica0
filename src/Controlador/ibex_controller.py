@@ -23,6 +23,7 @@ class IbexController:
         self.ej4()
         self.ej5()
         self.ej6()
+        self.guardar_bd()
         
     def ej1a(self):
         # Ej1-a
@@ -108,7 +109,7 @@ class IbexController:
     
     def ej6(self):
         # Ej6 (opcional)
-        # Herramienta IA usada: Claude
+        ##Herramienta IA usda: Claude
         self.view.titulo("Ej6")
         # No se guarda en self.df: la tabla final de la BD va "sin nuevas columnas"
         df_cambios = self.model.add_cambio_significativo(self.df)
@@ -141,4 +142,26 @@ class IbexController:
                           "XTB, 'Las acciones de Rovi caen tras sus resultados' (https://www.xtb.com/es/analisis-de-mercado/las-acciones-de-rovi-caen-tras-sus-resultados); "
                           "Bolsamania, 'Fuertes pérdidas para BBVA, Sabadell, Acciona y Solaria tras la victoria de Trump', 06/11/2024 "
                           "(https://www.bolsamania.com/catalunya/noticies_print/empreses/fortes-perdues-per-a-bbva-sabadell-acciona-i-solaria-despres-de-la-victoria-de-trump--17937892.html).")
- 
+
+#========================================================================================
+#===================Guardar en Base de Datos ============================================
+#========================================================================================
+
+    def guardar_bd(self):
+        # Almacenamiento en la base de datos IBEX35 (tabla Datos2024)
+        # Herramienta IA usada: Claude
+        self.view.titulo("BD")
+        try:
+            # 1) Datos completos tal cual vienen del CSV
+            self.db.write_table(self.model.load_raw(), "Datos2024")
+            self.view.mensaje("Datos completos del CSV guardados en la tabla Datos2024")
+            # 2) Datos tratados (self.df no incluye las columnas nuevas de Ej3, Ej5 y Ej6)
+            self.db.write_table(self.df, "Datos2024")
+            self.view.mensaje("Datos tratados guardados en la tabla Datos2024")
+        except Exception as error:
+            # Si no hay MySQL, la base IBEX35 o las credenciales (README), el resto de ejercicios sigue valiendo
+            # Py4J pone la causa real (p. ej. "Access denied", "Unknown database") en la 2.ª línea
+            lineas = str(error).splitlines()
+            causa = lineas[1] if len(lineas) > 1 else lineas[0]
+            self.view.mensaje(f"No se pudo guardar en la base de datos (revisar README): {causa.lstrip(': ')}")
+            

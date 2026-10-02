@@ -101,7 +101,6 @@ class IbexModel:
             StructField("Final", DecimalType(10, 2), True),
         ])
         resultado = self.spark.createDataFrame(datos, schema=esquema)
-        # Solo se pueden calcular las empresas con precio el primer y el último día
         resultado = resultado.dropna(subset=["Inicial", "Final"])
         resultado = resultado.withColumn("Variación Anual", (col("Final") - col("Inicial")) / col("Inicial") * 100)
         resultado = resultado.withColumn(
@@ -149,8 +148,6 @@ class IbexModel:
         for empresa in empresas:
             anterior = lag(col(empresa)).over(ventana)
             variacion = (col(empresa) - anterior) / anterior * 100
-            # Valor absoluto > 8  <=>  variacion > 8 o variacion < -8.
-            # Si no hay dato (primer dia o precio NULL) la condicion no se cumple y sale "-"
             nuevas.append(
                 when((variacion > 8) | (variacion < -8), variacion.cast("decimal(10, 2)").cast("string"))
                 .otherwise("-")
@@ -160,3 +157,4 @@ class IbexModel:
     def fila(self, df, n):
         """Devuelve la fila n (empezando en 1) como un DataFrame de una sola fila."""
         return self.spark.createDataFrame([df.head(n)[n - 1]], df.schema)
+    
