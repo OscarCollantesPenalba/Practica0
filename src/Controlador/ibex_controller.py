@@ -21,10 +21,10 @@ class IbexController:
         self.ej3a()
         self.ej3b()
         self.ej4()
+        self.ej5()
 
     def ej1a(self):
         # Ej1-a
-        # Herramienta IA usada: Claude
         self.view.titulo("Ej1-a")
         df = self.model.load_raw()
         self.view.esquema(df)
@@ -34,14 +34,12 @@ class IbexController:
 
     def ej1b(self):
         # Ej1-b
-        # Herramienta IA usada: Claude
         self.view.titulo("Ej1-b")
         self.df = self.model.remove_suffix(self.df)
         self.view.filas(self.df, 6)
 
     def ej1c(self):
         # Ej1-c (opcional)
-        # Herramienta IA usada: Claude
         self.view.titulo("Ej1-c")
         df_schema = self.model.load_with_schema()
         self.view.esquema(df_schema)
@@ -49,7 +47,6 @@ class IbexController:
 
     def ej2a(self):
         # Ej2-a
-        # Herramienta IA usada: Claude
         self.view.titulo("Ej2-a")
         filas_antes = self.df.count()
         self.df = self.model.clean_data(self.df)
@@ -59,7 +56,6 @@ class IbexController:
 
     def ej2b(self):
         # Ej2-b
-        # Herramienta IA usada: Claude
         self.view.titulo("Ej2-b")
         inicio, fin, dias = self.model.periodo(self.df)
         self.view.valor("Fecha inicial", inicio)
@@ -70,7 +66,6 @@ class IbexController:
     
     def ej3a(self):
         # Ej3-a
-        #Herramienta IA usada: Claude
         self.view.titulo("Ej3")
         self.df = self.model.rename_fecha(self.df)
         self.view.filas(self.df, 10)
@@ -101,3 +96,11 @@ class IbexController:
         self.view.titulo("Ej4")
         variaciones = self.model.variacion_anual(self.df)
         self.view.filas(variaciones, variaciones.count())
+        
+    def ej5(self):
+        #Ej5
+        self.view.titulo("Ej5")
+        df_cuartiles = self.model.add_cuartiles(self.df)
+        self.view.filas(df_cuartiles,1)
+        aena_bbva = df_cuartiles.select("Dia", "AENA", "AENACuartil", "BBVA", "BBVACuartil")
+        self.view.filas(aena_bbva, aena_bbva.count())

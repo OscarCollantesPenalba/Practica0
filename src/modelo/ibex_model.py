@@ -25,7 +25,7 @@ class IbexModel:
         for c in df.columns:
             if c != "Fecha":
                 df = df.withColumn(c, col(f"`{c}`").cast("decimal(10, 2)"))
-        return df
+        return df   
 
     def remove_suffix(self, df, suffix=".MC"):
         """Ej1-b: quita el sufijo de los nombres de todas las columnas."""
@@ -112,3 +112,28 @@ class IbexModel:
             .otherwise("Subida Fuerte"))
         return resultado.withColumn("Variación Anual", col("Variación Anual").cast("decimal(10, 2)"))
 
+
+#========================================================================================
+#===================Ejercicio 5==========================================================
+#========================================================================================
+
+    def add_cuartiles(self, df):
+        """Ej5: para cada empresa añade la columna <Empresa>Cuartil (q1, q2, q3 o q4) segun
+        en que cuartil de su distribucion de precios cae el valor de cada sesion."""
+        empresas = [c for c in df.columns if c != "Dia"]
+        # Una sola llamada calcula Q1, mediana y Q3 de todas las empresas (error relativo 0.01)
+        cuartiles = df.approxQuantile(empresas, [0.25, 0.5, 0.75], 0.01)
+        nuevas = []
+        for empresa, q in zip(empresas, cuartiles):
+            q1, q2, q3 = q
+            precio = col(empresa)
+            # Solo se clasifica si hay precio ese dia; sin precio (NULL) el cuartil queda NULL
+            nuevas.append(
+                when(precio.isNotNull(),
+                     when(precio <= q1, "q1")
+                     .when(precio <= q2, "q2")
+                     .when(precio <= q3, "q3")
+                     .otherwise("q4"))
+                .alias(f"{empresa}Cuartil"))
+        return df.select("*", *nuevas)
+ 
