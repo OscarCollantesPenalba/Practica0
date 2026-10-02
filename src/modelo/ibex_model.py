@@ -47,7 +47,7 @@ class IbexModel:
         df = df.dropDuplicates()
         empresas = [c for c in df.columns if c != "Fecha"]
         df = df.dropna(how="all", subset=empresas)
-        return df
+        return df.orderBy("Fecha")
     
     def periodo(self, df):
         """Ej2-b: fecha inicial, fecha final y número de días con datos."""
@@ -64,6 +64,7 @@ class IbexModel:
         return df.withColumnRenamed("Fecha", "Dia")
  
     def estadisticas_anuales(self, df):
+        """Ej3: Crea un dataframe con la media, maximo y minimo intervencion de las empresas"""
         empresas = [c for c in df.columns if c != "Dia"]
         medias = df.agg({c: "avg" for c in empresas}).head(1)[0]
         maximos = df.agg({c: "max" for c in empresas}).head(1)[0]
@@ -81,3 +82,33 @@ class IbexModel:
     def add_deficiency_notice(self, df):
         """Ej3: True si UNI cierra por debajo de 1 EUR ese día (cada día por separado)."""
         return df.withColumn("Deficiency Notice UNI", when(col("UNI") < 1, True).otherwise(False))
+    
+#========================================================================================
+#===================Ejercicio 4==========================================================
+#========================================================================================
+
+    def variacion_anual(self, df):
+        """Ej4: variación entre el primer y el último día y clasificación de cada empresa."""
+        empresas = [c for c in df.columns if c != "Dia"]
+        fechas = df.select(min("Dia"), max("Dia")).head(1)[0]
+        inicial = df.filter(col("Dia") == fechas[0]).head(1)[0]
+        final = df.filter(col("Dia") == fechas[1]).head(1)[0]
+        datos = [(c, inicial[c], final[c]) for c in empresas]
+        esquema = StructType([
+            StructField("Empresa", StringType(), True),
+            StructField("Inicial", DecimalType(10, 2), True),
+            StructField("Final", DecimalType(10, 2), True),
+        ])
+        resultado = self.spark.createDataFrame(datos, schema=esquema)
+        # Solo se pueden calcular las empresas con precio el primer y el último día
+        resultado = resultado.dropna(subset=["Inicial", "Final"])
+        resultado = resultado.withColumn("Variación Anual", (col("Final") - col("Inicial")) / col("Inicial") * 100)
+        resultado = resultado.withColumn(
+            "Clasificación",
+            when(col("Variación Anual") <= -15, "Bajada Fuerte")
+            .when(col("Variación Anual") < -1, "Bajada")
+            .when(col("Variación Anual") <= 1, "Neutra")
+            .when(col("Variación Anual") < 15, "Subida")
+            .otherwise("Subida Fuerte"))
+        return resultado.withColumn("Variación Anual", col("Variación Anual").cast("decimal(10, 2)"))
+

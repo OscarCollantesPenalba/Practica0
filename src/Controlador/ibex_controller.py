@@ -20,6 +20,7 @@ class IbexController:
         self.ej2b()
         self.ej3a()
         self.ej3b()
+        self.ej4()
 
     def ej1a(self):
         # Ej1-a
@@ -93,3 +94,10 @@ class IbexController:
                         "Valencia Plaza, 'Puig entrará en el Ibex 35 a partir del 22 de julio', julio de 2024 "
                         "(https://valenciaplaza.com/puig-entrara-ibex-35-partir-22-julio); "
                         "INEAF, 'Qué es el IBEX 35' (https://www.ineaf.es/tribuna/que-es-ibex-35/).")
+        
+    def ej4(self):
+        # Ej4
+        # Herramienta IA usada: Claude
+        self.view.titulo("Ej4")
+        variaciones = self.model.variacion_anual(self.df)
+        self.view.filas(variaciones, variaciones.count())
