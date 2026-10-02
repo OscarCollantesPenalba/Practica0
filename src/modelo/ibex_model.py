@@ -1,4 +1,5 @@
-from pyspark.sql.functions import col, regexp_replace, min, max, countDistinct, avg, when
+from pyspark.sql.functions import col, regexp_replace, min, max, countDistinct, avg, when,lag
+from pyspark.sql.window import Window
 from pyspark.sql.types import StructType, StructField, StringType, DecimalType
  
 from src.modelo.data_loader import load_raw, load_with_schema
@@ -121,13 +122,11 @@ class IbexModel:
         """Ej5: para cada empresa añade la columna <Empresa>Cuartil (q1, q2, q3 o q4) segun
         en que cuartil de su distribucion de precios cae el valor de cada sesion."""
         empresas = [c for c in df.columns if c != "Dia"]
-        # Una sola llamada calcula Q1, mediana y Q3 de todas las empresas (error relativo 0.01)
         cuartiles = df.approxQuantile(empresas, [0.25, 0.5, 0.75], 0.01)
         nuevas = []
         for empresa, q in zip(empresas, cuartiles):
             q1, q2, q3 = q
             precio = col(empresa)
-            # Solo se clasifica si hay precio ese dia; sin precio (NULL) el cuartil queda NULL
             nuevas.append(
                 when(precio.isNotNull(),
                      when(precio <= q1, "q1")
@@ -136,4 +135,28 @@ class IbexModel:
                      .otherwise("q4"))
                 .alias(f"{empresa}Cuartil"))
         return df.select("*", *nuevas)
- 
+
+#========================================================================================
+#===================Ejercicio 6==========================================================
+#========================================================================================
+
+    def add_cambio_significativo(self, df):
+        """Ej6: para cada empresa añade <Empresa>CambioSignificativo con la variacion (%) respecto
+        a la sesion anterior si es mayor al 8 % en valor absoluto, y "-" en caso contrario."""
+        empresas = [c for c in df.columns if c != "Dia"]
+        ventana = Window.orderBy("Dia")
+        nuevas = []
+        for empresa in empresas:
+            anterior = lag(col(empresa)).over(ventana)
+            variacion = (col(empresa) - anterior) / anterior * 100
+            # Valor absoluto > 8  <=>  variacion > 8 o variacion < -8.
+            # Si no hay dato (primer dia o precio NULL) la condicion no se cumple y sale "-"
+            nuevas.append(
+                when((variacion > 8) | (variacion < -8), variacion.cast("decimal(10, 2)").cast("string"))
+                .otherwise("-")
+                .alias(f"{empresa}CambioSignificativo"))
+        return df.select("*", *nuevas)
+
+    def fila(self, df, n):
+        """Devuelve la fila n (empezando en 1) como un DataFrame de una sola fila."""
+        return self.spark.createDataFrame([df.head(n)[n - 1]], df.schema)
